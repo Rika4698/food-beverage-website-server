@@ -1,7 +1,7 @@
 const express = require ('express');
 const cors = require ('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -30,19 +30,58 @@ async function run() {
     await client.connect();
     const productCollection = client.db('productDB').collection("product");
     
+    const sliderCollection = client.db('sliderDB').collection("slider.json");
+
+    app.get('/slider',async(req,res) => {
+        const cursor = sliderCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+    })
+
+
+    
         app.get('/product',async(req,res) => {
             const cursor = productCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         })
+        app.get('/product/:id',async(req,res) => {
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)}
+            const result = await productCollection.findOne(query);
+            res.send(result);
+        })
+        
+        
 
     app.post('/product', async(req,res)=>{
         const newProduct = req.body;
         console.log(newProduct);
         const result = await  productCollection.insertOne(newProduct);
         res.send(result);
-
     })
+
+    app.put('/product/:id', async(req,res) =>{
+      const id = req.params.id;
+      const filter ={_id: new ObjectId(id)};
+      const options = { upsert: true};
+      const updateProduct = req.body;
+      const product = {
+          $set:{
+            name: updateProduct.name,
+             image: updateProduct.image, 
+             brand: updateProduct.brand, 
+             type: updateProduct.type,
+               price: updateProduct.price,
+               rating: updateProduct.rating
+        }
+      }
+       const result = await productCollection.updateOne(filter,product,options);
+       res.send(result);
+    })
+
+
+    // const sliderCollection = client.db('productDB').collection("slider.json");
 
 
     // Send a ping to confirm a successful connection
