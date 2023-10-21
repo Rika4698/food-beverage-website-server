@@ -80,6 +80,48 @@ async function run() {
        res.send(result);
     })
 
+    // const cartCollection = client.db('cartDB').collection("cart");
+    // app.put('/cart',async (req,res) =>{
+    //    const data = req.body;
+    //    console.log(data);
+    //    const filter = {
+    //     $and: [
+    //         { email: data.email},
+    //         { productId: data.id }
+    //     ]
+    //    };
+    //    const options = { upsert: true};
+    //    const cart ={
+    //     $set:{
+    //         productId: data.id,
+    //         email: data.email
+    //     }
+    //    }
+    //    const result = await cartCollection.updateOne(filter,cart,options);
+    //    res.send(result);
+
+    // })
+
+    // app.get( '/cart',async (req,res) =>{
+    //     const cursor = cartCollection.find();
+    //     const result = await cursor.toArray();
+    //     res.send(result);
+    // })
+
+    // app.delete('/cart', async(req,res) => {
+    //     const data = req.body;
+    //     console.log(data);
+    //     const filter ={
+    //         $and:[
+    //             { email: data.email},
+    //             { productId: data.id}
+    //         ]
+    //     }
+    //     const result = await cartCollection.deleteOne(filter);
+    //     res.send(result);
+    // })
+    
+
 
     // const sliderCollection = client.db('productDB').collection("slider.json");
 
