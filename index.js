@@ -81,30 +81,77 @@ async function run() {
             res.send(result);
         })
         const cartCollection = client.db('CartDB').collection('carts');
-        app.put('/cart', async (req, res) => {
-            const data = req.body;
-            console.log(data);
-            const filter = {
-                $and: [
-                    { email: data.email },
-                    { prodId: data.id }
-                ]
-            };
-            const options = { upsert: true };
-            const cart = {
-                $set: {
-                    prodId: data.id,
-                    email: data.email
-                }
-            }
-            const result = await cartCollection.updateOne(filter, cart, options);
-            res.send(result);
-        })
+        // app.put('/cart', async (req, res) => {
+        //     const data = req.body;
+        //     console.log(data);
+        //     const filter = {
+        //         $and: [
+        //             { email: data.email },
+        //             { prodId: data.id }
+        //         ]
+        //     };
+        //     const options = { upsert: true };
+        //     const cart = {
+        //         $set: {
+        //             prodId: data.id,
+        //             email: data.email
+        //         }
+        //     }
+        //     const result = await cartCollection.updateOne(filter, cart, options);
+        //     res.send(result);
+        // })
+
+
         app.get('/cart', async (req, res) => {
-            const cursor = cartCollection.find();
-            const result = await cursor.toArray();
+            const email = req.query.email;
+            const query ={email: email}
+            
+            const result = await cartCollection.find(query).toArray();
             res.send(result);
         })
+
+        app.post('/cart', async(req,res)=>{
+            const cartItem = req.body;
+            const existingCartItem = await cartCollection.findOne({ proId: cartItem.proId, email: cartItem.email });
+            if (existingCartItem) {
+                res.status(400).send({ message: 'Product already exists in the cart.' });
+            } else {
+                const result = await cartCollection.insertOne(cartItem);
+                res.send(result);}
+        })
+        
+        // app.get('/comments/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const cart = await productCollection.findOne({ _id: new ObjectId(id) });
+        
+        //     if (cart) {
+        //         res.json({ comments: cart.comments || [] });
+        //     } else {
+        //         res.status(404).json({ message: 'Cart item not found' });
+        //     }
+        // });
+
+        app.put('/cartCommentUpdate/:id',  async(req, res)=>{
+            const id = req.params.id
+       const comment = req.query.comment
+       const cart = await productCollection.findOne({_id: new ObjectId(id)})
+       console.log(cart);
+       if (cart) {
+        if(cart.reports){
+          updatedQuery = {
+            $push: {comments: comment}
+          }
+        }else{
+          updatedQuery = {
+            $set: {comments: [comment]}
+          }
+        }
+      }
+       
+       const result = await productCollection.updateOne({_id: new ObjectId(id)}, updatedQuery)
+       res.send(result)
+      })
+
         app.delete('/cart', async (req, res) => {
             const data = req.body;
             console.log(data);
