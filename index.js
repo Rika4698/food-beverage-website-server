@@ -1,7 +1,7 @@
 const express = require ('express');
 const cors = require ('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -27,9 +27,189 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    //await client.connect();
+
+    const productCollection = client.db('productDB').collection("product");
+
+    const sliderCollection = client.db('sliderDB').collection("slider.json");
+
+    app.get('/slider', async (req, res) => {
+        const cursor = sliderCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+    })
+
+
+
+    app.get('/product', async (req, res) => {
+        const cursor = productCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+    })
+    app.get('/product/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await productCollection.findOne(query);
+        res.send(result);
+    })
+
+
+
+    app.post('/product', async (req, res) => {
+        const newProduct = req.body;
+        console.log(newProduct);
+        const result = await productCollection.insertOne(newProduct);
+        res.send(result);
+    })
+
+    app.put('/product/:id', async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateProduct = req.body;
+        const product = {
+            $set: {
+                name: updateProduct.name,
+                image: updateProduct.image,
+                brand: updateProduct.brand,
+                type: updateProduct.type,
+                price: updateProduct.price,
+                rating: updateProduct.rating
+            }
+        }
+        const result = await productCollection.updateOne(filter, product, options);
+        res.send(result);
+    })
+    const cartCollection = client.db('CartDB').collection('carts');
+    // app.put('/cart', async (req, res) => {
+    //     const data = req.body;
+    //     console.log(data);
+    //     const filter = {
+    //         $and: [
+    //             { email: data.email },
+    //             { prodId: data.id }
+    //         ]
+    //     };
+    //     const options = { upsert: true };
+    //     const cart = {
+    //         $set: {
+    //             prodId: data.id,
+    //             email: data.email
+    //         }
+    //     }
+    //     const result = await cartCollection.updateOne(filter, cart, options);
+    //     res.send(result);
+    // })
+    app.get('/cart', async (req, res) => {
+        const email = req.query.email;
+        console.log(email);
+        const query = {email: email};
+       
+        const result = await cartCollection.find(query).toArray();
+        console.log(result);
+        res.send(result);
+    })
+
+
+   app.post('/cart',async(req,res)=>{
+
+    const cartItem = req.body;
+    console.log(cartItem);
+    
+  
+    const existingCartItem = await cartCollection.findOne({ proId: cartItem.proId, email: cartItem.email });
+    if (existingCartItem) {
+        res.status(400).send({ message: 'Product already exists in the cart.' });
+    } else {
+        const result = await cartCollection.insertOne(cartItem);
+        res.send(result);
+    }
+   
+   })
+
+
+    app.delete('/cart/:id', async (req, res) => {
+        const id = req.params.id;
+        // console.log(data);
+        // // const query = { prodId: data.id };
+        // const filter = {
+        //     $and: [
+        //         { email: data.email },
+        //         { prodId: data.id }
+        //     ]
+        // }
+        const query = { _id: new ObjectId(id)}
+        const result = await cartCollection.deleteOne(query);
+        res.send(result);
+    })
+    // app.delete('/cart', async (req, res) => {
+    //     const data = req.body;
+    //         const result = await cartCollection.deleteMany(data);
+    //         console.log( result.deletedCount );
+    //         res.send(result);
+    // })
+       
+
+    // app.delete('/cart/:email', async (req, res) => {
+    //     const email = req.params.email;
+
+    //     try {
+    //         const result = await cartCollection.deleteMany({ email: email });
+    //         console.log(result);
+    //         res.send(result);
+    //     } catch (error) {
+    //         console.error("Error deleting items from cart:", error);
+    //         res.status(500).send({ message: "Internal server error" });
+    //     }
+    // })
+
+
+    // const cartCollection = client.db('cartDB').collection("cart");
+    // app.put('/cart',async (req,res) =>{
+    //    const data = req.body;
+    //    console.log(data);
+    //    const filter = {
+    //     $and: [
+    //         { email: data.email},
+    //         { productId: data.id }
+    //     ]
+    //    };
+    //    const options = { upsert: true};
+    //    const cart ={
+    //     $set:{
+    //         productId: data.id,
+    //         email: data.email
+    //     }
+    //    }
+    //    const result = await cartCollection.updateOne(filter,cart,options);
+    //    res.send(result);
+
+    // })
+
+    // app.get( '/cart',async (req,res) =>{
+    //     const cursor = cartCollection.find();
+    //     const result = await cursor.toArray();
+    //     res.send(result);
+    // })
+
+    // app.delete('/cart', async(req,res) => {
+    //     const data = req.body;
+    //     console.log(data);
+    //     const filter ={
+    //         $and:[
+    //             { email: data.email},
+    //             { productId: data.id}
+    //         ]
+    //     }
+    //     const result = await cartCollection.deleteOne(filter);
+    //     res.send(result);
+    // })
+
+
+
+    // const sliderCollection = client.db('productDB').collection("slider.json");
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    //await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
