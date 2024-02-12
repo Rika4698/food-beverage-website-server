@@ -119,38 +119,109 @@ async function run() {
                 const result = await cartCollection.insertOne(cartItem);
                 res.send(result);}
         })
-        
-        // app.get('/comments/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const cart = await productCollection.findOne({ _id: new ObjectId(id) });
-        
-        //     if (cart) {
-        //         res.json({ comments: cart.comments || [] });
-        //     } else {
-        //         res.status(404).json({ message: 'Cart item not found' });
-        //     }
-        // });
 
-        app.put('/cartCommentUpdate/:id',  async(req, res)=>{
-            const id = req.params.id
-       const comment = req.query.comment
-       const cart = await productCollection.findOne({_id: new ObjectId(id)})
-       console.log(cart);
-       if (cart) {
-        if(cart.reports){
-          updatedQuery = {
-            $push: {comments: comment}
-          }
-        }else{
-          updatedQuery = {
-            $set: {comments: [comment]}
-          }
-        }
-      }
+
+        // app.post('/comment', async (req, res) => {
+        //     try {
+        //       const { id, comment } = req.body;
+        //       const result = await productCollection.updateOne(
+        //         { _id: new ObjectId(id) },
+        //         { $push: { comments: comment } }
+        //       );
+        //       res.send({ message: 'Comment added successfully' });
+        //     } catch (error) {
+        //       console.error('Error adding comment:', error);
+        //       res.status(500).send({ message: 'Internal server error' });
+        //     }
+        //   });
+        
+          // Endpoint to get all comments for a product
+        //   app.get('/comments/:id', async (req, res) => {
+        //     try {
+        //       const { id } = req.params;
+        //       const product = await productCollection.findOne({ _id: new ObjectId(id) });
+        //       res.send(product.comments);
+        //     } catch (error) {
+        //       console.error('Error fetching comments:', error);
+        //       res.status(500).send({ message: 'Internal server error' });
+        //     }
+        //   });
+        
+      
+        
+    //     app.get('/comments/:id', async (req, res) => {
+    //         const id = req.params.id;
+    //         const cart = await productCollection.findOne({ _id: new ObjectId(id) });
+        
+    //         if (cart) {
+    //             res.send({ comments: cart.comments || [] });
+    //         } else {
+    //             res.status(404).send({ message: 'Cart item not found' });
+    //         }
+    //     });
+
+    //     app.put('/cartCommentUpdate/:id',  async(req, res)=>{
+    //         const id = req.params.id
+    //    const comment = req.query.comment
+    //    const cart = await productCollection.findOne({_id: new ObjectId(id)})
+    //    console.log(cart);
+    //    if (cart) {
+    //     if(cart.reports){
+    //       updatedQuery = {
+    //         $push: {comments: comment}
+    //       }
+    //     }else{
+    //       updatedQuery = {
+    //         $set: {comments: [comment]}
+    //       }
+    //     }
+    //   }
        
-       const result = await productCollection.updateOne({_id: new ObjectId(id)}, updatedQuery)
-       res.send(result)
-      })
+    //    const result = await productCollection.updateOne({_id: new ObjectId(id)}, updatedQuery);
+    //    res.send(result);
+    //   })
+
+    app.get('/cartComments/:id', async (req, res) => {
+        try {
+            const id = req.params.id;
+            const cart = await productCollection.findOne({_id: new ObjectId(id)});
+            if (cart) {
+                res.json(cart.comments || []);
+            } else {
+                res.status(404).json({ message: 'Cart not found' });
+            }
+        } catch (error) {
+            console.error('Error fetching cart comments:', error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    });
+
+      app.put('/cartCommentUpdate/:id', async (req, res) => {
+        try {
+            const id = req.params.id;
+            const comment = req.query.comment;
+            let updatedQuery;
+            const cart = await productCollection.findOne({_id: new ObjectId(id)});
+            if (cart) {
+                if (cart.comments && cart.comments.length > 0) {
+                    updatedQuery = {
+                        $push: {comments: comment}
+                    };
+                } else {
+                    updatedQuery = {
+                        $set: {comments: [comment]}
+                    };
+                }
+                const result = await productCollection.updateOne({_id: new ObjectId(id)}, updatedQuery);
+                res.json(result);
+            } else {
+                res.status(404).json({ message: 'Cart not found' });
+            }
+        } catch (error) {
+            console.error('Error updating cart comments:', error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    });
 
         app.delete('/cart', async (req, res) => {
             const data = req.body;
