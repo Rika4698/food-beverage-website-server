@@ -226,7 +226,7 @@ async function run() {
         app.delete('/cart/:id', async (req, res) => {
             const id = req.params.id;
             const query ={_id: new ObjectId(id)}
-            console.log(data);
+            // console.log(data);
             // const query = { prodId: data.id };
             // const filter = {
             //     $and: [
