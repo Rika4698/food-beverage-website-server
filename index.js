@@ -223,17 +223,18 @@ async function run() {
         }
     });
 
-        app.delete('/cart', async (req, res) => {
-            const data = req.body;
+        app.delete('/cart/:id', async (req, res) => {
+            const id = req.params.id;
+            const query ={_id: new ObjectId(id)}
             console.log(data);
             // const query = { prodId: data.id };
-            const filter = {
-                $and: [
-                    { email: data.email },
-                    { prodId: data.id }
-                ]
-            }
-            const result = await cartCollection.deleteOne(filter);
+            // const filter = {
+            //     $and: [
+            //         { email: data.email },
+            //         { prodId: data.id }
+            //     ]
+            // }
+            const result = await cartCollection.deleteOne(query);
             res.send(result);
         })
         // app.delete('/cart', async (req, res) => {
@@ -244,19 +245,19 @@ async function run() {
         // })
            
     
-        app.delete('/cart', async (req, res) => {
-            const data = req.body;
-            console.log(data);
-            const query = { prodId: data.id };
-            const filter = {
-                $and: [
-                    { email: data.email },
-                    { prodId: data.id }
-                ]
-            }
-            const result = await cartCollection.deleteMany(filter);
-            res.send(result);
-        })
+        // app.delete('/cart', async (req, res) => {
+        //     const data = req.body;
+        //     console.log(data);
+        //     const query = { prodId: data.id };
+        //     const filter = {
+        //         $and: [
+        //             { email: data.email },
+        //             { prodId: data.id }
+        //         ]
+        //     }
+        //     const result = await cartCollection.deleteMany(filter);
+        //     res.send(result);
+        // })
 
 
         // const cartCollection = client.db('cartDB').collection("cart");
@@ -307,7 +308,7 @@ async function run() {
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
