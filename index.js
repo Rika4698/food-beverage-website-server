@@ -72,6 +72,7 @@ async function run() {
                     name: updateProduct.name,
                     image: updateProduct.image,
                     brand: updateProduct.brand,
+                    photo: updateProduct.photo,
                     type: updateProduct.type,
                     price: updateProduct.price,
                     rating: updateProduct.rating
@@ -104,8 +105,9 @@ async function run() {
 
         app.get('/cart', async (req, res) => {
             const email = req.query.email;
+            // console.log(email);
             const query ={email: email}
-            
+            // console.log(query);
             const result = await cartCollection.find(query).toArray();
             res.send(result);
         })
@@ -149,16 +151,16 @@ async function run() {
         
       
         
-    //     app.get('/comments/:id', async (req, res) => {
-    //         const id = req.params.id;
-    //         const cart = await productCollection.findOne({ _id: new ObjectId(id) });
+        // app.get('/comments/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const cart = await productCollection.findOne({ _id: new ObjectId(id) });
         
-    //         if (cart) {
-    //             res.send({ comments: cart.comments || [] });
-    //         } else {
-    //             res.status(404).send({ message: 'Cart item not found' });
-    //         }
-    //     });
+        //     if (cart) {
+        //         res.send({ comments: cart.comments || [] });
+        //     } else {
+        //         res.status(404).send({ message: 'Cart item not found' });
+        //     }
+        // });
 
     //     app.put('/cartCommentUpdate/:id',  async(req, res)=>{
     //         const id = req.params.id
@@ -181,47 +183,105 @@ async function run() {
     //    res.send(result);
     //   })
 
-    app.get('/cartComments/:id', async (req, res) => {
-        try {
-            const id = req.params.id;
-            const cart = await productCollection.findOne({_id: new ObjectId(id)});
-            if (cart) {
-                res.json(cart.comments || []);
-            } else {
-                res.status(404).json({ message: 'Cart not found' });
-            }
-        } catch (error) {
-            console.error('Error fetching cart comments:', error);
-            res.status(500).json({ message: 'Internal server error' });
-        }
-    });
+    
+    
+   
+  // Fetch comments for a product
+  app.get('/cartComments/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const product = await productCollection.findOne(
+            { _id: new ObjectId(id) },
+            { projection: { comments: 1 } }
+        );
+        
+        res.json(product?.comments || []);
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error fetching comments',
+            error: error.message 
+        });
+    }
+});
 
-      app.put('/cartCommentUpdate/:id', async (req, res) => {
-        try {
-            const id = req.params.id;
-            const comment = req.query.comment;
-            let updatedQuery;
-            const cart = await productCollection.findOne({_id: new ObjectId(id)});
-            if (cart) {
-                if (cart.comments && cart.comments.length > 0) {
-                    updatedQuery = {
-                        $push: {comments: comment}
-                    };
-                } else {
-                    updatedQuery = {
-                        $set: {comments: [comment]}
-                    };
-                }
-                const result = await productCollection.updateOne({_id: new ObjectId(id)}, updatedQuery);
-                res.json(result);
-            } else {
-                res.status(404).json({ message: 'Cart not found' });
+app.post('/addComment/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const commentData = req.body;
+        
+        const comment = {
+            _id: new ObjectId(),
+            ...commentData,
+            timestamp: new Date().toISOString()
+        };
+
+        const result = await productCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $push: { comments: comment } }
+        );
+
+        res.json({ 
+            success: true, 
+            message: 'Comment added successfully',
+            result 
+        });
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error adding comment',
+            error: error.message 
+        });
+    }
+});
+
+app.delete('/deleteComment/:productId/:commentId', async (req, res) => {
+    try {
+        const { productId, commentId } = req.params;
+
+        const result = await productCollection.updateOne(
+            { _id: new ObjectId(productId) },
+            { 
+                $pull: { 
+                    comments: { 
+                        _id: new ObjectId(commentId) 
+                    } 
+                } 
             }
-        } catch (error) {
-            console.error('Error updating cart comments:', error);
-            res.status(500).json({ message: 'Internal server error' });
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Comment not found' 
+            });
         }
-    });
+
+        res.json({ 
+            success: true, 
+            message: 'Comment deleted successfully' 
+        });
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error deleting comment',
+            error: error.message 
+        });
+    }
+});
+    // Start Server
+    // app.listen(port, () => {
+    //     console.log(`Server is running on port ${port}`);
+    // });
+    
+
+
+
+
+
 
         app.delete('/cart/:id', async (req, res) => {
             const id = req.params.id;
